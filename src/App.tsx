@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import reactLogo from "./assets/react.svg";
-import "./App.css";
 
 import {
   HuddleClientProvider,
@@ -8,39 +6,39 @@ import {
   useRootStore,
 } from "@huddle01/huddle01-client";
 import PeerVideoAudioElem from "./components/PeerVideoAudioElem";
+import Setup from "./components/Setup";
+import Navbar from "./components/Navbar";
+import Wallet from "./components/Wallet";
+import LandingIcons from "./assets/LandingIcons";
+import useClientStore from "./store/useClientStore";
 
 function App() {
-  const huddleClient = getHuddleClient("YOUR_API_KEY");
+  const huddleClient = getHuddleClient("ramit");
   const stream = useRootStore((state) => state.stream);
+
   const enableStream = useRootStore((state) => state.enableStream);
   const pauseTracks = useRootStore((state) => state.pauseTracks);
   const isCamPaused = useRootStore((state) => state.isCamPaused);
   const peers = useRootStore((state) => state.peers);
   const peerId = useRootStore((state) => state.peerId);
   const lobbyPeers = useRootStore((state) => state.lobbyPeers);
+  const [loggedIn, setLoggedIn] = useState<boolean>(false);
   const roomState = useRootStore((state) => state.roomState);
+  const address = useClientStore((state) => state.address);
 
-  const handleJoin = async () => {
-    try {
-      await huddleClient.join("dev ", {
-        address: "0x15900c698ee356E6976e5645394F027F0704c8Eb",
-        wallet: "",
-        ens: "axit.eth",
-      });
+  const micState = useRootStore((state) => state.micState);
 
-      console.log("joined");
-    } catch (error) {
-      console.log({ error });
-    }
-  };
+  console.log({ micState });
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream;
-    }
-  }, [stream]);
+  console.log({ address });
+
+  // useEffect(() => {
+  //   if (videoRef.current) {
+  //     videoRef.current.srcObject = stream;
+  //   }
+  // }, [stream]);
 
   useEffect(() => {
     console.log({ peers: Object.values(peers), peerId, isCamPaused });
@@ -48,78 +46,79 @@ function App() {
 
   return (
     <HuddleClientProvider value={huddleClient}>
-      <div className="App grid grid-cols-2">
-        <div>
-          <div>
-            <a href="https://vitejs.dev" target="_blank">
-              <img src="/vite.svg" className="logo" alt="Vite logo" />
-            </a>
-            <a href="https://reactjs.org" target="_blank">
-              <img src={reactLogo} className="logo react" alt="React logo" />
-            </a>
-          </div>
-          <h1>Vite + React</h1>
-
-          <h2 className={`text-${!roomState.joined ? "red" : "green"}`}>
-            Room Joined:&nbsp;{roomState.joined.toString()}
-          </h2>
-          <h2>Instructions</h2>
-          <ol className="w-fit mx-auto text-left">
-            <li>
-              Click on <b>Enable Stream</b>
-            </li>
-            <li>
-              Then Click on <b>Join room</b>, <i>"Room Joined"</i> should be
-              changed to true
-            </li>
-            <li>
-              Open the app in a <b>new tab</b> and repeat <b>steps 1 & 2</b>
-            </li>
-            <li>Return to 1st tab, now you'll see peers in the peer list,</li>
-            <li>
-              Click on <b>allowAllLobbyPeersToJoinRoom</b> to accept peers into
-              the room.
-            </li>
-          </ol>
+      {/* Navabr */}
+      <div className="bg-brand min-h-screen">
+        <div className="flex justify-center items-center">
+          <span className="h-3/4"> {LandingIcons.icon}</span>
+          <p className="text-lenstext text-3xl m-2 flex justify-center py-2">
+            Lensify
+          </p>
         </div>
 
-        <div>
-          <div className="card">
-            <button onClick={handleJoin}>Join Room</button>
-            <button onClick={() => enableStream()}>Enable Stream</button>
-            <button onClick={() => pauseTracks()}>Disable Stream</button>
-            <button onClick={() => huddleClient.enableWebcam()}>
-              Enable Webcam
-            </button>
-            <button onClick={() => huddleClient.disableWebcam()}>
-              Disable Webcam
-            </button>
-            <button onClick={() => huddleClient.allowAllLobbyPeersToJoinRoom()}>
-              allowAllLobbyPeersToJoinRoom()
-            </button>
-          </div>
-          {!isCamPaused && (
-            <video
-              style={{ width: "50%" }}
-              ref={videoRef}
-              autoPlay
-              muted
-            ></video>
-          )}
+        <div className="flex flex-col m-20 items-center">
+          <Wallet />
+        </div>
 
-          {lobbyPeers[0] && <h2>Lobby Peers</h2>}
-          <div>
-            {lobbyPeers.map((peer) => (
-              <div>{peer.peerId}</div>
-            ))}
-          </div>
+        <div className="bg-brand h-full ">
+          <div className="flex flex-col h-full w-full my-20 items-center">
+            {/* // host */}
+            <div className="bg-[#E5FFBE] rounded-md w-1/3 h-56 backdrop-blur-md flex justify-center items-center">
+              {LandingIcons.avatar}
+            </div>
+            {lobbyPeers[0] && <h2>Lobby Peers</h2>}
+            <div>
+              {lobbyPeers.map((peer) => (
+                <div>{peer.peerId}</div>
+              ))}
+            </div>
 
-          {Object.values(peers)[0] && <h2>Peers</h2>}
+            {Object.values(peers)[0] && <h2>Peers</h2>}
 
-          <div className="peers-grid">
-            {Object.values(peers).map((peer) => (
-              <PeerVideoAudioElem peerIdAtIndex={peer.peerId} />
-            ))}
+            <div className="peers-grid grid-flow-col">
+              {Object.values(peers).map((peer, i) => (
+                <>
+                  <PeerVideoAudioElem peerIdAtIndex={peer.peerId} />
+
+                  <div className="bg-yellow-200">{`Peer` + i}</div>
+                </>
+              ))}
+            </div>
+            <br />
+
+            {!roomState.joined && <Setup huddleClient={huddleClient} />}
+
+            <div className="flex">
+              <button
+                className="p-2 m-1 rounded-lg bg-brandbutton text-brand font-semibold"
+                onClick={() => enableStream()}
+              >
+                Enable Stream
+              </button>
+              <button
+                className="p-2  m-1 rounded-lg bg-brandbutton text-brand font-semibold"
+                onClick={() => pauseTracks()}
+              >
+                Disable Stream
+              </button>
+            </div>
+
+            {roomState.joined && (
+              <button
+                className="p-2 rounded-lg bg-brandbutton text-brand font-semibold"
+                onClick={() => huddleClient.allowAllLobbyPeersToJoinRoom()}
+              >
+                allowAllLobbyPeersToJoinRoom()
+              </button>
+            )}
+            {/* <UserProfile /> */}
+
+            <button
+              type="button"
+              onClick={() => huddleClient.enableShare()}
+              className="bg-green-200 "
+            >
+              Share
+            </button>
           </div>
         </div>
       </div>

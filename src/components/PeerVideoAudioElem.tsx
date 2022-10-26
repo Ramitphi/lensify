@@ -7,10 +7,18 @@ interface Props {
 
 const PeerVideoAudioElem: React.FC<Props> = ({ peerIdAtIndex }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   const peerCamTrack = useHuddleStore(
     useCallback(
       (state) => state.peers[peerIdAtIndex]?.consumers?.cam,
+      [peerIdAtIndex]
+    )
+  )?.track;
+
+  const peerMicTrack = useHuddleStore(
+    useCallback(
+      (state) => state.peers[peerIdAtIndex]?.consumers?.mic,
       [peerIdAtIndex]
     )
   )?.track;
@@ -45,8 +53,41 @@ const PeerVideoAudioElem: React.FC<Props> = ({ peerIdAtIndex }) => {
     };
   }, [peerCamTrack]);
 
+  useEffect(() => {
+    if (peerMicTrack && audioRef.current) {
+      audioRef.current.srcObject = getStream(peerMicTrack);
+    }
+  }, [peerMicTrack]);
+
   return (
-    <video ref={videoRef} muted autoPlay playsInline style={{ width: "50%" }} />
+    <div>
+      <video
+        ref={videoRef}
+        muted
+        autoPlay
+        playsInline
+        style={{ width: "50%" }}
+      />
+      <img src="" id="musicanimation" className="w-10" />
+      <audio
+        ref={audioRef}
+        autoPlay
+        playsInline
+        controls={false}
+        onPlaying={() => {
+          var imageId = document.getElementById("musicanimation");
+          var audioimageId = imageId as HTMLAudioElement;
+
+          audioimageId.src = "./src/assets/music.gif";
+        }}
+        onPause={() => {
+          var imageId = document.getElementById("musicanimation");
+          var audioimageId = imageId as HTMLAudioElement;
+
+          audioimageId.src = "";
+        }}
+      ></audio>
+    </div>
   );
 };
 
